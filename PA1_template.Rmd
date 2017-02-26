@@ -1,25 +1,226 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research assignment - I."
+author: "A. D."
+date: '2017 february 24 '
 ---
+</br>
+
+Summary of the assignment
+
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+The data for this assignment can be downloaded from the course web site:
+
+Dataset: Activity monitoring data [52K]
+The variables included in this dataset are:
+
+steps: Number of steps taking in a 5-minute interval (missing values are coded as NA)
+date: The date on which the measurement was taken in YYYY-MM-DD format
+interval: Identifier for the 5-minute interval in which measurement was taken
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this datase
 
 
-## Loading and preprocessing the data
+</br>
+
+
+###Reading data from the working directory and creating the "activity" dataset:
+</br>
+
+```{r}
+
+activity <- read.csv("activity.csv", header = TRUE, sep = ",")
+
+```
+
+</br>
+
+Checking the class of the variables
+
+</br>
+
+```{r}
+
+str(activity)
+
+```
+
+</br>
+
+Transforming "date" variable to Date format
+
+</br>
+
+```{r}
+
+activity$date <- as.Date(activity$date)
+
+```
+
+</br>
+
+###Histogram on the mean of the total number of steps taken per day.
+
+</br>
+
+```{r}
+
+steps_day <- aggregate(activity$steps ~ activity$date, FUN = sum, na.rm = TRUE)
+
+hist(steps_day$`activity$steps`, breaks = 20, col = "lightblue", main = "Total steps activity", 
+     xlab = "Number of steps taken per days")
+
+```
+
+</br>
+
+Mean and median of the total number of steps taken per day. As one can see, the date follows the structure of normal distribution
+
+</br>
+
+```{r}
+mean(steps_day$`activity$steps`)
+
+median(steps_day$`activity$steps`)
+```
+
+</br>
+
+###Average daily activity pattern
+
+Time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+</br>
+
+```{r}
+
+steps_int <- aggregate(activity$steps ~ activity$interval, FUN = mean, na.rm = TRUE)
+
+plot(steps_int$`activity$interval`, steps_int$`activity$steps`, type = "l", 
+     main = "Avarage daily pattern of steps", xlab = "5 minutes intervals", 
+     ylab = "Number of steps taken")
+
+```
+
+</br>
+
+5-minute interval, on average across all the days in the dataset, containing the maximum number of steps
+
+</br>
+
+```{r}
+
+max_steps <- subset(steps_int, steps_int$`activity$steps` == max(steps_int$`activity$steps`))
+
+max_steps$`activity$interval`
+
+```
+
+</br>
+
+###Total number of missing values in the dataset (i.e. the total number of rows with NAs):
+
+</br>
+
+```{r}
+
+sum(is.na(activity))
+
+```
+
+</br>
+
+###Filling in all of the missing values in the dataset.
+
+In the process of imputation I used the mean values from the 5 minutes intervals.
+
+</br>
+
+```{r}
+
+data_2_new <- data.frame()
+
+  for(j in 1:61){
+    
+    data_2_new <- rbind(data_2_new, steps_int)
+    
+  }
+  
+  for (i in 1:17568) {
+    
+    if (is.na(activity$steps[i]) == TRUE) {
+      
+      activity$steps[i] <- data_2_new[i ,2]
+    
+      }
+  }
+  
+  return(sum(is.na(activity)))
+
+```
+
+</br>
+
+###Histogram of the total number of steps taken each day and the mean and median total number of steps taken per day.
+
+</br>
+
+```{r}
+
+steps_day_clean <- aggregate(activity$steps ~ activity$date, FUN = sum, na.rm = TRUE)
+
+hist(steps_day_clean$`activity$steps`, breaks = 20, col = "lightblue", 
+     main = "Total steps activity", 
+     xlab = "Number of steps taken per days")
+
+```
+
+</br>
+
+The new histogram shows the same pattern, but as one can see, the scale of the y axis changed (due to higher number of usable observations)
+
+</br></br>
+
+###Differences in activity patterns between weekdays and weekends
+
+</br>
+
+```{r}
+
+activity$date <- as.Date(activity$date)
+
+
+library(chron)
+
+activity$weekend <- is.weekend(activity$date)
+
+activity_weekend <- subset(activity, activity$weekend == TRUE)
+activity_weekdays <- subset(activity, activity$weekend == FALSE)
+
+
+steps_int_weekend <- aggregate(activity_weekend$steps ~ activity_weekend$interval, FUN = mean, na.rm = TRUE)
+
+steps_int_weekdays <- aggregate(activity_weekdays$steps ~ activity_weekdays$interval, FUN = mean, na.rm = TRUE)
+
+par(mfrow = c(2,1), mar = c(2, 2, 2, 2))
+
+plot(steps_int_weekend$`activity_weekend$interval`, steps_int_weekend$`activity_weekend$steps`, type = "l", 
+     main = "Avarage weekend pattern of steps", xlab = "5 minutes intervals", 
+     ylab = "Number of steps taken")
 
 
 
-## What is mean total number of steps taken per day?
 
+plot(steps_int_weekdays$`activity_weekdays$interval`, steps_int_weekdays$`activity_weekdays$steps`, 
+     type = "l", 
+     main = "Avarage weekdays pattern of steps", xlab = "5 minutes intervals", 
+     ylab = "Number of steps taken")
 
+```
 
-## What is the average daily activity pattern?
+</br>
 
+According to the graphs regarding the weekdays - weekend step numbers, we can observe higher activity during the weekend.
 
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+</br></br></br>
